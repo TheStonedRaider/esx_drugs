@@ -38,7 +38,7 @@ Citizen.CreateThread(function()
 				ESX.ShowHelpNotification(_U('dealer_prompt'))
 
 				if IsControlJustReleased(0, Keys['E']) then
-					wasOpen = true
+					wasOpen = false
 					OpenDrugShop()
 				end
 			else
