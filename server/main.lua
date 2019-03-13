@@ -62,6 +62,42 @@ AddEventHandler('esx_drugs:sellDrug', function(itemName, amount)
 	TriggerClientEvent('esx:showNotification', source, _U('dealer_sold', amount, xItem.label, ESX.Math.GroupDigits(price)))
 end)
 
+RegisterServerEvent('esx_drugs:sellDrugBig')
+AddEventHandler('esx_drugs:sellDrugBig', function(itemName, amount)
+		
+	if CopsConnected < Config.RequiredCopssellBig then
+	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopssellBig)
+	return
+	end
+
+	local xPlayer = ESX.GetPlayerFromId(source)
+	local price = Config.BigDrugDealerItems[itemName]
+	local xItem = xPlayer.getInventoryItem(itemName)
+
+	if not price then
+		print(('esx_drugs: %s attempted to sell an invalid drug!'):format(xPlayer.identifier))
+		return
+	end
+
+	if xItem.count < amount then
+		TriggerClientEvent('esx:showNotification', source, _U('dealer_notenough'))
+		return
+	end
+
+	price = ESX.Math.Round(price * amount)
+
+	if Config.GiveBlack then
+		xPlayer.addAccountMoney('black_money', price)
+	else
+		xPlayer.addMoney(price)
+	end
+
+	xPlayer.removeInventoryItem(xItem.name, amount)
+
+	TriggerClientEvent('esx:showNotification', source, _U('dealer_sold', amount, xItem.label, ESX.Math.GroupDigits(price)))
+end)
+
+
 ESX.RegisterServerCallback('esx_drugs:buyLicense', function(source, cb, licenseName)
 	local xPlayer = ESX.GetPlayerFromId(source)
 	local license = Config.LicensePrices[licenseName]
