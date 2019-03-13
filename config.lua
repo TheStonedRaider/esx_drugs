@@ -1,6 +1,8 @@
 Config = {}
 Config.RequiredCopsWeed = 0
 Config.RequiredCopsCoke = 2
+Config.RequiredCopssell = 0
+
 Config.Showblips = true
 Config.Locale = 'en'
 
