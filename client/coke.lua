@@ -23,9 +23,9 @@ Citizen.CreateThread(function()
 		local playerPed = PlayerPedId()
 		local coords = GetEntityCoords(playerPed)
 
-		if GetDistanceBetweenCoords(coords, Config.CircleZones.CokeProcessing.coords, true) < 1 then
+		if GetDistanceBetweenCoords(coords, Config.CircleZones.CokeProcessing.coords, true) < 2 then
 			if not isProcessing then
-				ESX.ShowHelpNotification(_U('Coke_processprompt'))
+				ESX.ShowHelpNotification(_U('coke_processprompt'))
 			end
 
 			if IsControlJustReleased(0, Keys['E']) and not isProcessing then
@@ -35,9 +35,9 @@ Citizen.CreateThread(function()
 						if hasProcessingLicense then
 							ProcessCoke()
 						else
-							OpenBuyLicenseMenu('Coke_processing')
+							OpenBuyLicenseMenu('coke_processing')
 						end
-					end, GetPlayerServerId(PlayerId()), 'Coke_processing')
+					end, GetPlayerServerId(PlayerId()), 'coke_processing')
 				else
 					ProcessCoke()
 				end
@@ -138,8 +138,8 @@ function SpawnCokePlants()
 		Citizen.Wait(0)
 		local cokeCoords = GenerateCokeCoords()
 
-		ESX.Game.SpawnLocalObject('prop_weed_02', cokeCoords, function(obj)
-			PlaceObjectOnGroundProperly(obj)
+		ESX.Game.SpawnLocalObject('prop_bush_med_03', cokeCoords, function(obj)
+--			PlaceObjectOnGroundProperly(obj)
 			FreezeEntityPosition(obj, true)
 
 			table.insert(cokePlants, obj)
@@ -186,7 +186,7 @@ function GenerateCokeCoords()
 		cokeCoordY = Config.CircleZones.CokeField.coords.y + modY
 
 		local coordZ = GetCoordZ(cokeCoordX, cokeCoordY)
-		local coord = vector3(cokeCoordX, cokeCoordY, coordZ)
+		local coord = vector3(cokeCoordX, cokeCoordY, coordZ) 
 
 		if ValidateCokeCoord(coord) then
 			return coord
@@ -201,7 +201,7 @@ function GetCoordZ(x, y)
 		local foundGround, z = GetGroundZFor_3dCoord(x, y, height)
 
 		if foundGround then
-			return z
+			return z -1 
 		end
 	end
 
