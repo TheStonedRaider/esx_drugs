@@ -141,6 +141,11 @@ function OpenBuyLicenseMenu(licenseName)
 end
 
 function CreateBlipCircle(coords, text, radius, color, sprite)
+	If Config.Showblips = true then 
+	return
+	end 
+		
+	
 	local blip = AddBlipForRadius(coords, radius)
 
 	SetBlipHighDetail(blip, true)
