@@ -1,7 +1,7 @@
 Config = {}
 Config.RequiredCopsWeed = 0
 Config.RequiredCopsCoke = 2
-
+Config.Showblips = true
 Config.Locale = 'en'
 
 Config.Delays = {
