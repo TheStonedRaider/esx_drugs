@@ -1,4 +1,5 @@
 Config = {}
+Config.RequiredCopsWeed = 0
 Config.RequiredCopsCoke = 2
 
 Config.Locale = 'en'
