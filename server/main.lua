@@ -1,5 +1,7 @@
 ESX = nil
 local playersProcessingCannabis = {}
+local playersProcessingCoke = {}
+
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
@@ -52,6 +54,17 @@ ESX.RegisterServerCallback('esx_drugs:buyLicense', function(source, cb, licenseN
 	end
 end)
 
+ESX.RegisterServerCallback('esx_drugs:canPickUp', function(source, cb, item)
+	local xPlayer = ESX.GetPlayerFromId(source)
+	local xItem = xPlayer.getInventoryItem(item)
+
+	if xItem.limit ~= -1 and xItem.count >= xItem.limit then
+		cb(false)
+	else
+		cb(true)
+	end
+end)
+--cannabis--
 RegisterServerEvent('esx_drugs:pickedUpCannabis')
 AddEventHandler('esx_drugs:pickedUpCannabis', function()
 	local xPlayer = ESX.GetPlayerFromId(source)
@@ -64,16 +77,7 @@ AddEventHandler('esx_drugs:pickedUpCannabis', function()
 	end
 end)
 
-ESX.RegisterServerCallback('esx_drugs:canPickUp', function(source, cb, item)
-	local xPlayer = ESX.GetPlayerFromId(source)
-	local xItem = xPlayer.getInventoryItem(item)
 
-	if xItem.limit ~= -1 and xItem.count >= xItem.limit then
-		cb(false)
-	else
-		cb(true)
-	end
-end)
 
 RegisterServerEvent('esx_drugs:processCannabis')
 AddEventHandler('esx_drugs:processCannabis', function()
@@ -102,10 +106,57 @@ AddEventHandler('esx_drugs:processCannabis', function()
 	end
 end)
 
+--cocane--
+
+RegisterServerEvent('esx_drugs:pickedUpCoke')
+AddEventHandler('esx_drugs:pickedUpCoke', function()
+	local xPlayer = ESX.GetPlayerFromId(source)
+	local xItem = xPlayer.getInventoryItem('coke')
+
+	if xItem.limit ~= -1 and (xItem.count + 1) > xItem.limit then
+		TriggerClientEvent('esx:showNotification', _source, _U('coke_inventoryfull'))
+	else
+		xPlayer.addInventoryItem(xItem.name, 1)
+	end
+end)
+
+
+
+RegisterServerEvent('esx_drugs:processCoke')
+AddEventHandler('esx_drugs:processCoke', function()
+	if not playersProcessingCoke[source] then
+		local _source = source
+
+		playersProcessingCoke[_source] = ESX.SetTimeout(Config.Delays.CokeProcessing, function()
+			local xPlayer = ESX.GetPlayerFromId(_source)
+			local xCoke, xCokebag = xPlayer.getInventoryItem('coke'), xPlayer.getInventoryItem('cokebag')
+
+			if xCokebag.limit ~= -1 and (xCokebag.count + 1) >= xCokebag.limit then
+				TriggerClientEvent('esx:showNotification', _source, _U('coke_processingfull'))
+			elseif xCoke.count < 3 then
+				TriggerClientEvent('esx:showNotification', _source, _U('coke_processingenough'))
+			else
+				xPlayer.removeInventoryItem('coke', 3)
+				xPlayer.addInventoryItem('cokebag', 1)
+
+				TriggerClientEvent('esx:showNotification', _source, _U('coke_processed'))
+			end
+
+			playersProcessingCoke[_source] = nil
+		end)
+	else
+		print(('esx_drugs: %s attempted to exploit coke processing!'):format(GetPlayerIdentifiers(source)[1]))
+	end
+end)
+
 function CancelProcessing(playerID)
 	if playersProcessingCannabis[playerID] then
 		ESX.ClearTimeout(playersProcessingCannabis[playerID])
 		playersProcessingCannabis[playerID] = nil
+		end
+	if playersProcessingCoke[playerID] then
+		ESX.ClearTimeout(playersProcessingCoke[playerID])
+		playersProcessingCoke[playerID] = nil
 	end
 end
 
