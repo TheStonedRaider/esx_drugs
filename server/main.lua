@@ -1,6 +1,9 @@
 ESX = nil
 local playersProcessingCannabis = {}
 local playersProcessingCoke = {}
+local CopsConnected       	   = 0
+
+TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
 function CountCops()
 
@@ -22,13 +25,13 @@ end
 CountCops()
 
 
-TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+
 
 RegisterServerEvent('esx_drugs:sellDrug')
 AddEventHandler('esx_drugs:sellDrug', function(itemName, amount)
 		
-	if CopsConnected < Config.RequiredCopsCoke then
-	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopsCoke)
+	if CopsConnected < Config.RequiredCopssell then
+	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopssell)
 	return
 	end
 
