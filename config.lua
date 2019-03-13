@@ -1,4 +1,4 @@
-Config = {}
+Config = {} 
 Config.RequiredCopsWeed = 0
 Config.RequiredCopsCoke = 1
 Config.RequiredCopssell = 0  --sell weed at smoke on the water
