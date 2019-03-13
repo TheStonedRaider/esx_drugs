@@ -2,11 +2,36 @@ ESX = nil
 local playersProcessingCannabis = {}
 local playersProcessingCoke = {}
 
+function CountCops()
+
+	local xPlayers = ESX.GetPlayers()
+
+	CopsConnected = 0
+
+	for i=1, #xPlayers, 1 do
+		local xPlayer = ESX.GetPlayerFromId(xPlayers[i])
+		if xPlayer.job.name == 'police' then
+			CopsConnected = CopsConnected + 1
+		end
+	end
+
+	SetTimeout(5000, CountCops)
+
+end
+
+CountCops()
+
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
 RegisterServerEvent('esx_drugs:sellDrug')
 AddEventHandler('esx_drugs:sellDrug', function(itemName, amount)
+		
+	if CopsConnected < Config.RequiredCopsCoke then
+	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopsCoke)
+	return
+	end
+
 	local xPlayer = ESX.GetPlayerFromId(source)
 	local price = Config.DrugDealerItems[itemName]
 	local xItem = xPlayer.getInventoryItem(itemName)
@@ -81,6 +106,12 @@ end)
 
 RegisterServerEvent('esx_drugs:processCannabis')
 AddEventHandler('esx_drugs:processCannabis', function()
+		
+	if CopsConnected < Config.RequiredCopsWeed then
+	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopsWeed)
+	return
+	end
+
 	if not playersProcessingCannabis[source] then
 		local _source = source
 
@@ -124,6 +155,12 @@ end)
 
 RegisterServerEvent('esx_drugs:processCoke')
 AddEventHandler('esx_drugs:processCoke', function()
+		
+	if CopsConnected < Config.RequiredCopsCoke then
+	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopsCoke)
+	return
+	end
+
 	if not playersProcessingCoke[source] then
 		local _source = source
 
