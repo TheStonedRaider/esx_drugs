@@ -185,7 +185,7 @@ function GenerateCokeCoords()
 		cokeCoordX = Config.CircleZones.CokeField.coords.x + modX
 		cokeCoordY = Config.CircleZones.CokeField.coords.y + modY
 
-		local coordZ = GetCoordZ(cokeCoordX, cokeCoordY)
+		local coordZ = GetCoordZ(cokeCoordX, cokeCoordY) - 1
 		local coord = vector3(cokeCoordX, cokeCoordY, coordZ) 
 
 		if ValidateCokeCoord(coord) then
