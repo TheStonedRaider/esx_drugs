@@ -53,8 +53,8 @@ function ProcessWeed()
 	isProcessing = true
 
 	ESX.ShowNotification(_U('weed_processingstarted'))
-	TriggerServerEvent('esx_drugs:processCannabis')
-	local timeLeft = Config.Delays.WeedProcessing / 1000
+	TriggerServerEvent('esx_drugs:processDrug', 'cannabis', 'marijuana', Config.Delays.WeedProcessing*1000)
+	local timeLeft = Config.Delays.WeedProcessing
 	local playerPed = PlayerPedId()
 
 	while timeLeft > 0 do
@@ -98,7 +98,7 @@ Citizen.CreateThread(function()
 					if canPickUp then
 						TaskStartScenarioInPlace(playerPed, 'world_human_gardener_plant', 0, false)
 
-						Citizen.Wait(2000)
+						Citizen.Wait(Config.Delays.WeedPickUp * 1000)
 						ClearPedTasks(playerPed)
 						Citizen.Wait(1500)
 		
@@ -106,8 +106,8 @@ Citizen.CreateThread(function()
 		
 						table.remove(weedPlants, nearbyID)
 						spawnedWeeds = spawnedWeeds - 1
-		
-						TriggerServerEvent('esx_drugs:pickedUpCannabis')
+
+						TriggerServerEvent('esx_drugs:pickedUp', 'cannabis')
 					else
 						ESX.ShowNotification(_U('weed_inventoryfull'))
 					end

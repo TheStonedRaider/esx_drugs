@@ -29,68 +29,44 @@ end)
 
 Citizen.CreateThread(function()
 	while true do
-		Citizen.Wait(0)
+
 		local playerPed = PlayerPedId()
 		local coords = GetEntityCoords(playerPed)
 
-		if GetDistanceBetweenCoords(coords, Config.CircleZones.DrugDealer.coords, true) < 0.5 then
-			if not menuOpen then
-				ESX.ShowHelpNotification(_U('dealer_prompt'))
+		for dealer,v in pairs(Config.DrugDealers) do
 
-				if IsControlJustReleased(0, Keys['E']) then
-					wasOpen = false
-					OpenDrugShop()
+			if GetDistanceBetweenCoords(coords, v.coords, true) < 0.5 then
+				if not menuOpen then
+					
+					ESX.ShowHelpNotification(_U('dealer_prompt') .. v.name)
+
+					if IsControlJustReleased(0, Keys['E']) then
+						wasOpen = true
+						OpenDrugShop(dealer)
+					end
+				else
+					Citizen.Wait(500)
 				end
 			else
+				if wasOpen then
+					wasOpen = false
+					ESX.UI.Menu.CloseAll()
+				end
 				Citizen.Wait(500)
 			end
-		else
-			if wasOpen then
-				wasOpen = false
-				ESX.UI.Menu.CloseAll()
-			end
-
-			Citizen.Wait(500)
 		end
-	end
-end)
-
-Citizen.CreateThread(function()
-	while true do
 		Citizen.Wait(0)
-		local playerPed = PlayerPedId()
-		local coords = GetEntityCoords(playerPed)
-
-		if GetDistanceBetweenCoords(coords, Config.CircleZones.BigDrugDealer.coords, true) < 2.5 then
-			if not menuOpen then
-				ESX.ShowHelpNotification(_U('dealer_prompt'))
-
-				if IsControlJustReleased(0, Keys['E']) then
-					wasOpen = false
-					OpenDrugShopBig()
-				end
-			else
-				Citizen.Wait(500)
-			end
-		else
-			if wasOpen then
-				wasOpen = false
-				ESX.UI.Menu.CloseAll()
-			end
-
-			Citizen.Wait(500)
-		end
 	end
 end)
 
-
-function OpenDrugShop()
+function OpenDrugShop(dealer)
 	ESX.UI.Menu.CloseAll()
 	local elements = {}
 	menuOpen = true
 
 	for k, v in pairs(ESX.GetPlayerData().inventory) do
-		local price = Config.DrugDealerItems[v.name]
+
+		local price = Config.DrugDealers[dealer].items[v.name]
 
 		if price and v.count > 0 then
 			table.insert(elements, {
@@ -112,41 +88,7 @@ function OpenDrugShop()
 		align    = 'top-left',
 		elements = elements
 	}, function(data, menu)
-		TriggerServerEvent('esx_drugs:sellDrug', data.current.name, data.current.value)
-	end, function(data, menu)
-		menu.close()
-		menuOpen = false
-	end)
-end
-function OpenDrugShopBig()
-	ESX.UI.Menu.CloseAll()
-	local elements = {}
-	menuOpen = true
-
-	for k, v in pairs(ESX.GetPlayerData().inventory) do
-		local price = Config.BigDrugDealerItems[v.name]
-
-		if price and v.count > 0 then
-			table.insert(elements, {
-				label = ('%s - <span style="color:green;">%s</span>'):format(v.label, _U('dealer_item', ESX.Math.GroupDigits(price))),
-				name = v.name,
-				price = price,
-
-				-- menu properties
-				type = 'slider',
-				value = 1,
-				min = 1,
-				max = v.count
-			})
-		end
-	end
-
-	ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'drug_shop', {
-		title    = _U('dealer_title'),
-		align    = 'top-left',
-		elements = elements
-	}, function(data, menu)
-		TriggerServerEvent('esx_drugs:sellDrugBig', data.current.name, data.current.value)
+		TriggerServerEvent('esx_drugs:sellDrug', dealer, data.current.name, data.current.value)
 	end, function(data, menu)
 		menu.close()
 		menuOpen = false
@@ -204,11 +146,6 @@ function OpenBuyLicenseMenu(licenseName)
 end
 
 function CreateBlipCircle(coords, text, radius, color, sprite)
-	if Config.Showblips == true then 
-	else
-return
-end	
-	
 	local blip = AddBlipForRadius(coords, radius)
 
 	SetBlipHighDetail(blip, true)
@@ -231,7 +168,8 @@ end
 
 Citizen.CreateThread(function()
 	for k,zone in pairs(Config.CircleZones) do
-
-		CreateBlipCircle(zone.coords, zone.name, zone.radius, zone.color, zone.sprite)
+		if Config.ShowBlips then
+			CreateBlipCircle(zone.coords, zone.name, zone.radius, zone.color, zone.sprite)
+		end
 	end
 end)

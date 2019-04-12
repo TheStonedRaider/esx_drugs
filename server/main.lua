@@ -1,42 +1,21 @@
 ESX = nil
-local playersProcessingCannabis = {}
-local playersProcessingCoke = {}
-local CopsConnected       	   = 0
+local playersProcessing = {}
+local copsConnected = 0
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
-function CountCops()
-
-	local xPlayers = ESX.GetPlayers()
-
-	CopsConnected = 0
-
-	for i=1, #xPlayers, 1 do
-		local xPlayer = ESX.GetPlayerFromId(xPlayers[i])
-		if xPlayer.job.name == 'police' then
-			CopsConnected = CopsConnected + 1
-		end
-	end
-
-	SetTimeout(5000, CountCops)
-
-end
-
-CountCops()
-
-
-
-
 RegisterServerEvent('esx_drugs:sellDrug')
-AddEventHandler('esx_drugs:sellDrug', function(itemName, amount)
-		
-	if CopsConnected < Config.RequiredCopssell then
-	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopssell)
-	return
+AddEventHandler('esx_drugs:sellDrug', function(dealer, itemName, amount)
+
+	CountCops()
+
+	if copsConnected < Config.RequiredCopsSell then
+		TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. copsConnected .. '/' .. Config.RequiredCopsSell)
+		return
 	end
 
 	local xPlayer = ESX.GetPlayerFromId(source)
-	local price = Config.DrugDealerItems[itemName]
+	local price = Config.DrugDealers[dealer].items[itemName]
 	local xItem = xPlayer.getInventoryItem(itemName)
 
 	if not price then
@@ -61,42 +40,6 @@ AddEventHandler('esx_drugs:sellDrug', function(itemName, amount)
 
 	TriggerClientEvent('esx:showNotification', source, _U('dealer_sold', amount, xItem.label, ESX.Math.GroupDigits(price)))
 end)
-
-RegisterServerEvent('esx_drugs:sellDrugBig')
-AddEventHandler('esx_drugs:sellDrugBig', function(itemName, amount)
-		
-	if CopsConnected < Config.RequiredCopssellBig then
-	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopssellBig)
-	return
-	end
-
-	local xPlayer = ESX.GetPlayerFromId(source)
-	local price = Config.BigDrugDealerItems[itemName]
-	local xItem = xPlayer.getInventoryItem(itemName)
-
-	if not price then
-		print(('esx_drugs: %s attempted to sell an invalid drug!'):format(xPlayer.identifier))
-		return
-	end
-
-	if xItem.count < amount then
-		TriggerClientEvent('esx:showNotification', source, _U('dealer_notenough'))
-		return
-	end
-
-	price = ESX.Math.Round(price * amount)
-
-	if Config.GiveBlack then
-		xPlayer.addAccountMoney('black_money', price)
-	else
-		xPlayer.addMoney(price)
-	end
-
-	xPlayer.removeInventoryItem(xItem.name, amount)
-
-	TriggerClientEvent('esx:showNotification', source, _U('dealer_sold', amount, xItem.label, ESX.Math.GroupDigits(price)))
-end)
-
 
 ESX.RegisterServerCallback('esx_drugs:buyLicense', function(source, cb, licenseName)
 	local xPlayer = ESX.GetPlayerFromId(source)
@@ -118,6 +61,13 @@ ESX.RegisterServerCallback('esx_drugs:buyLicense', function(source, cb, licenseN
 	end
 end)
 
+RegisterServerEvent('esx_drugs:pickedUp')
+AddEventHandler('esx_drugs:pickedUp', function(item)
+	local xPlayer = ESX.GetPlayerFromId(source)
+	local xItem = xPlayer.getInventoryItem(item)
+	xPlayer.addInventoryItem(xItem.name, 1)
+end)
+
 ESX.RegisterServerCallback('esx_drugs:canPickUp', function(source, cb, item)
 	local xPlayer = ESX.GetPlayerFromId(source)
 	local xItem = xPlayer.getInventoryItem(item)
@@ -128,111 +78,57 @@ ESX.RegisterServerCallback('esx_drugs:canPickUp', function(source, cb, item)
 		cb(true)
 	end
 end)
---cannabis--
-RegisterServerEvent('esx_drugs:pickedUpCannabis')
-AddEventHandler('esx_drugs:pickedUpCannabis', function()
-	local xPlayer = ESX.GetPlayerFromId(source)
-	local xItem = xPlayer.getInventoryItem('cannabis')
 
-	if xItem.limit ~= -1 and (xItem.count + 1) > xItem.limit then
-		TriggerClientEvent('esx:showNotification', _source, _U('weed_inventoryfull'))
-	else
-		xPlayer.addInventoryItem(xItem.name, 1)
-	end
-end)
+RegisterServerEvent('esx_drugs:processDrug')
+AddEventHandler('esx_drugs:processDrug', function(fromItem, toItem, delay)
 
+	CountCops()
 
-
-RegisterServerEvent('esx_drugs:processCannabis')
-AddEventHandler('esx_drugs:processCannabis', function()
-		
-	if CopsConnected < Config.RequiredCopsWeed then
-	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopsWeed)
-	return
+	if copsConnected < Config.RequiredCopsProcess then
+		TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. copsConnected .. '/' .. Config.RequiredCopsProcess)
+		return
 	end
 
-	if not playersProcessingCannabis[source] then
+	if not playersProcessing[source] then
 		local _source = source
 
-		playersProcessingCannabis[_source] = ESX.SetTimeout(Config.Delays.WeedProcessing, function()
+		playersProcessing[_source] = ESX.SetTimeout(delay, function()
 			local xPlayer = ESX.GetPlayerFromId(_source)
-			local xCannabis, xMarijuana = xPlayer.getInventoryItem('cannabis'), xPlayer.getInventoryItem('marijuana')
+			local xFromItem, xToItem = xPlayer.getInventoryItem(fromItem), xPlayer.getInventoryItem(toItem)
 
-			if xMarijuana.limit ~= -1 and (xMarijuana.count + 1) >= xMarijuana.limit then
+			if xToItem.limit ~= -1 and (xToItem.count + 1) >= xToItem.limit then
 				TriggerClientEvent('esx:showNotification', _source, _U('weed_processingfull'))
-			elseif xCannabis.count < 3 then
+			elseif xFromItem.count < 3 then
 				TriggerClientEvent('esx:showNotification', _source, _U('weed_processingenough'))
 			else
-				xPlayer.removeInventoryItem('cannabis', 3)
-				xPlayer.addInventoryItem('marijuana', 1)
+				xPlayer.removeInventoryItem(fromItem, 3)
+				xPlayer.addInventoryItem(toItem, 1)
 
 				TriggerClientEvent('esx:showNotification', _source, _U('weed_processed'))
 			end
 
-			playersProcessingCannabis[_source] = nil
+			playersProcessing[_source] = nil
 		end)
 	else
-		print(('esx_drugs: %s attempted to exploit weed processing!'):format(GetPlayerIdentifiers(source)[1]))
-	end
-end)
-
---cocane--
-
-RegisterServerEvent('esx_drugs:pickedUpCoke')
-AddEventHandler('esx_drugs:pickedUpCoke', function()
-	local xPlayer = ESX.GetPlayerFromId(source)
-	local xItem = xPlayer.getInventoryItem('coke')
-
-	if xItem.limit ~= -1 and (xItem.count + 1) > xItem.limit then
-		TriggerClientEvent('esx:showNotification', _source, _U('coke_inventoryfull'))
-	else
-		xPlayer.addInventoryItem(xItem.name, 1)
-	end
-end)
-
-
-
-RegisterServerEvent('esx_drugs:processCoke')
-AddEventHandler('esx_drugs:processCoke', function()
-		
-	if CopsConnected < Config.RequiredCopsCoke then
-	TriggerClientEvent('esx:showNotification', source, _U('act_imp_police') .. CopsConnected .. '/' .. Config.RequiredCopsCoke)
-	return
-	end
-
-	if not playersProcessingCoke[source] then
-		local _source = source
-
-		playersProcessingCoke[_source] = ESX.SetTimeout(Config.Delays.CokeProcessing, function()
-			local xPlayer = ESX.GetPlayerFromId(_source)
-			local xCoke, xCokebag = xPlayer.getInventoryItem('coke'), xPlayer.getInventoryItem('cokebag')
-
-			if xCokebag.limit ~= -1 and (xCokebag.count + 1) >= xCokebag.limit then
-				TriggerClientEvent('esx:showNotification', _source, _U('coke_processingfull'))
-			elseif xCoke.count < 3 then
-				TriggerClientEvent('esx:showNotification', _source, _U('coke_processingenough'))
-			else
-				xPlayer.removeInventoryItem('coke', 3)
-				xPlayer.addInventoryItem('cokebag', 1)
-
-				TriggerClientEvent('esx:showNotification', _source, _U('coke_processed'))
-			end
-
-			playersProcessingCoke[_source] = nil
-		end)
-	else
-		print(('esx_drugs: %s attempted to exploit coke processing!'):format(GetPlayerIdentifiers(source)[1]))
+		print(('esx_drugs: %s attempted to exploit drug processing!'):format(GetPlayerIdentifiers(source)[1]))
 	end
 end)
 
 function CancelProcessing(playerID)
-	if playersProcessingCannabis[playerID] then
-		ESX.ClearTimeout(playersProcessingCannabis[playerID])
-		playersProcessingCannabis[playerID] = nil
+	if playersProcessing[playerID] then
+		ESX.ClearTimeout(playersProcessing[playerID])
+		playersProcessing[playerID] = nil
+	end
+end
+
+function CountCops()
+	local xPlayers = ESX.GetPlayers()
+	copsConnected = 0
+	for i=1, #xPlayers, 1 do
+		local xPlayer = ESX.GetPlayerFromId(xPlayers[i])
+		if xPlayer.job.name == 'police' then
+			copsConnected = copsConnected + 1
 		end
-	if playersProcessingCoke[playerID] then
-		ESX.ClearTimeout(playersProcessingCoke[playerID])
-		playersProcessingCoke[playerID] = nil
 	end
 end
 
