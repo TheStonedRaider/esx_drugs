@@ -1,4 +1,4 @@
-local spawnedcoke = 0
+local spawnedCoke = 0
 local cokePlants = {}
 local isPickingUp, isProcessing = false, false
 
@@ -53,8 +53,8 @@ function ProcessCoke()
 	isProcessing = true
 
 	ESX.ShowNotification(_U('coke_processingstarted'))
-	TriggerServerEvent('esx_drugs:processCoke')
-	local timeLeft = Config.Delays.CokeProcessing / 1000
+	TriggerServerEvent('esx_drugs:processDrug', 'coke', 'cokebag', Config.Delays.CokeProcessing*1000)
+	local timeLeft = Config.Delays.CokeProcessing
 	local playerPed = PlayerPedId()
 
 	while timeLeft > 0 do
@@ -98,23 +98,23 @@ Citizen.CreateThread(function()
 					if canPickUp then
 						TaskStartScenarioInPlace(playerPed, 'world_human_gardener_plant', 0, false)
 
-						Citizen.Wait(2000)
+						Citizen.Wait(Config.Delays.CokePickUp * 1000)
 						ClearPedTasks(playerPed)
 						Citizen.Wait(1500)
 		
 						ESX.Game.DeleteObject(nearbyObject)
 		
 						table.remove(cokePlants, nearbyID)
-						spawnedcoke = spawnedcoke - 1
+						spawnedCoke = spawnedCoke - 1
 		
-						TriggerServerEvent('esx_drugs:pickedUpCoke')
+						TriggerServerEvent('esx_drugs:pickedUp', 'coke')
 					else
 						ESX.ShowNotification(_U('coke_inventoryfull'))
 					end
 
 					isPickingUp = false
 
-				end, 'cannabis')
+				end, 'coke')
 			end
 
 		else
@@ -134,7 +134,7 @@ AddEventHandler('onResourceStop', function(resource)
 end)
 
 function SpawnCokePlants()
-	while spawnedcoke < 25 do
+	while spawnedCoke < 25 do
 		Citizen.Wait(0)
 		local cokeCoords = GenerateCokeCoords()
 
@@ -143,13 +143,13 @@ function SpawnCokePlants()
 			FreezeEntityPosition(obj, true)
 
 			table.insert(cokePlants, obj)
-			spawnedcoke = spawnedcoke + 1
+			spawnedCoke = spawnedCoke + 1
 		end)
 	end
 end
 
 function ValidateCokeCoord(plantCoord)
-	if spawnedcoke > 0 then
+	if spawnedCoke > 0 then
 		local validate = true
 
 		for k, v in pairs(cokePlants) do
@@ -185,7 +185,7 @@ function GenerateCokeCoords()
 		cokeCoordX = Config.CircleZones.CokeField.coords.x + modX
 		cokeCoordY = Config.CircleZones.CokeField.coords.y + modY
 
-		local coordZ = GetCoordZ(cokeCoordX, cokeCoordY) - 1
+		local coordZ = GetCoordZ(cokeCoordX, cokeCoordY) - 2
 		local coord = vector3(cokeCoordX, cokeCoordY, coordZ) 
 
 		if ValidateCokeCoord(coord) then
@@ -201,7 +201,7 @@ function GetCoordZ(x, y)
 		local foundGround, z = GetGroundZFor_3dCoord(x, y, height)
 
 		if foundGround then
-			return z -1 
+			return z
 		end
 	end
 
